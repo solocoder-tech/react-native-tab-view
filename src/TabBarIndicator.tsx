@@ -2,37 +2,30 @@ import * as React from 'react';
 import {
   Animated,
   Easing,
+  I18nManager,
   Platform,
-  type StyleProp,
+  StyleProp,
   StyleSheet,
-  type ViewStyle,
+  ViewStyle,
 } from 'react-native';
 
-import type {
-  LocaleDirection,
-  NavigationState,
-  Route,
-  SceneRendererProps,
-} from './types';
+import type { NavigationState, Route, SceneRendererProps } from './types';
 import { useAnimatedValue } from './useAnimatedValue';
 
 export type GetTabWidth = (index: number) => number;
 
 export type Props<T extends Route> = SceneRendererProps & {
   navigationState: NavigationState<T>;
-  width: 'auto' | `${number}%` | number;
-  getTabWidth: GetTabWidth;
-  direction: LocaleDirection;
+  width: string | number;
   style?: StyleProp<ViewStyle>;
+  getTabWidth: GetTabWidth;
   gap?: number;
-  children?: React.ReactNode;
 };
 
 const getTranslateX = (
   position: Animated.AnimatedInterpolation<number>,
   routes: Route[],
   getTabWidth: GetTabWidth,
-  direction: LocaleDirection,
   gap?: number
 ) => {
   const inputRange = routes.map((_, i) => i);
@@ -49,7 +42,7 @@ const getTranslateX = (
     extrapolate: 'clamp',
   });
 
-  return Animated.multiply(translateX, direction === 'rtl' ? -1 : 1);
+  return Animated.multiply(translateX, I18nManager.isRTL ? -1 : 1);
 };
 
 export function TabBarIndicator<T extends Route>({
@@ -58,10 +51,8 @@ export function TabBarIndicator<T extends Route>({
   navigationState,
   position,
   width,
-  direction,
   gap,
   style,
-  children,
 }: Props<T>) {
   const isIndicatorShown = React.useRef(false);
   const isWidthDynamic = width === 'auto';
@@ -105,9 +96,7 @@ export function TabBarIndicator<T extends Route>({
 
   if (layout.width) {
     const translateX =
-      routes.length > 1
-        ? getTranslateX(position, routes, getTabWidth, direction, gap)
-        : 0;
+      routes.length > 1 ? getTranslateX(position, routes, getTabWidth, gap) : 0;
 
     transform.push({ translateX });
   }
@@ -127,7 +116,7 @@ export function TabBarIndicator<T extends Route>({
               })
             : outputRange[0],
       },
-      { translateX: direction === 'rtl' ? -0.5 : 0.5 }
+      { translateX: 0.5 }
     );
   }
 
@@ -147,15 +136,13 @@ export function TabBarIndicator<T extends Route>({
         width === 'auto' ? { opacity: opacity } : null,
         style,
       ]}
-    >
-      {children}
-    </Animated.View>
+    />
   );
 }
 
 const styles = StyleSheet.create({
   indicator: {
-    backgroundColor: '#ffeb3b',
+    backgroundColor: '#00000000',
     position: 'absolute',
     left: 0,
     bottom: 0,
